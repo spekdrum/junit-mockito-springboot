@@ -69,6 +69,18 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 	/**
 	 * {@inheritDoc}
 	 */
+	/*
+	 * El método markDelivered no sería testeable si se quiere evitar el envío de emails.
+	 * Posibles soluciones a acoplamiento EmailService:
+	 *
+	 * 1 - Rediseñar EmailService de modo que sea un servicio stateless, ahora no lo es. (y si viene en un jar que no
+	 * 		podemos tocar?)
+	 * 2 - Implementar un EmailServiceFactory, introducirlo como dependencia aquí. (es lo más elegante, aunque no
+	 * 		siempre será posible)
+	 * 3 - Incluir método "protected" o sin qualifier en la clase que provea la dependencia y hacer spy de la clase en
+	 * 		el test. Stubear ese método para que devuelva un mock del servicio.
+	 *
+	 */
 	public void markDelivered(Order order, Date deliverDate) throws OrderException {
 		if (!order.isSent()) {
 			throw new OrderException("El pedido no está enviado");
@@ -87,7 +99,7 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 		deliveryScoreService.submitDeliveryPoints(deliveryScore);
 
 		//Send email notification
-		EmailService emailService = new EmailService(order); //defecto acoplamiento
+		EmailService emailService = new EmailService(order); //FIXME defecto acoplamiento
 
 		emailService.sendDeliveryNotification();
 	}

@@ -41,7 +41,7 @@ public class AmazonDeliveryServiceImplTest {
 
 
 	@Test
-	public void newOrderShouldReturnInitializedOrder() throws Exception {
+	public void newOrderShouldReturnInitializedOrder() {
 
 		//Given
 		final String desc = TEST_PRODUCT;
@@ -64,7 +64,7 @@ public class AmazonDeliveryServiceImplTest {
 	}
 
 	@Test
-	public void addDiscountShouldCalcFinalPriceWhenDiscountsAdded() throws Exception {
+	public void addDiscountShouldCalcFinalPriceWhenDiscountsAdded() {
 		//Given
 		final double basePrice = 5.0;
 		final double discount = 10.0;
@@ -80,7 +80,7 @@ public class AmazonDeliveryServiceImplTest {
 	}
 
 	@Test
-	public void addDiscountShouldAcumulateDiscountsWhenDiscountsAdded() throws Exception {
+	public void addDiscountShouldAcumulateDiscountsWhenDiscountsAdded() {
 		//Given
 		final double basePrice = 150.0;
 		final double discount1 = 10.0;
@@ -221,11 +221,4 @@ public class AmazonDeliveryServiceImplTest {
 
 		//Then throw OrderException
 	}
-
-//	private Date tomorrow() {
-//		Calendar calendar = Calendar.getInstance();
-//		calendar.setTime(new Date());
-//		calendar.add(Calendar.DAY_OF_MONTH, 1);
-//		return calendar.getTime();
-//	}
 }

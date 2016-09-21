@@ -14,7 +14,7 @@ public class EmailService {
 	}
 
 	public void sendDeliveryNotification() {
-		System.out.println("Enviando notificación producto " + order.getDescription());
+		System.out.println("ATENCIÓN! Enviando notificación producto " + order.getDescription());
 	}
 
 }
