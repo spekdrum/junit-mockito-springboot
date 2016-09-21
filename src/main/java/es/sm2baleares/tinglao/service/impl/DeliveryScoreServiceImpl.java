@@ -14,6 +14,7 @@ public class DeliveryScoreServiceImpl implements DeliveryScoreService {
 	private long totalPoints;
 
 	public void submitDeliveryPoints(long points) {
+		System.out.println("SUMO " + points + " PUNTOS!");
 		totalPoints += points;
 	}
 

@@ -99,9 +99,14 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 		deliveryScoreService.submitDeliveryPoints(deliveryScore);
 
 		//Send email notification
-		EmailService emailService = new EmailService(order); //FIXME defecto acoplamiento
+		EmailService emailService = getEmailServiceInstance(order);
 
 		emailService.sendDeliveryNotification();
+	}
+
+	//Fix para habilitar mocking de EmailService cuando no sea posible crear Factory o rediseñar el servicio.
+	EmailService getEmailServiceInstance(Order order) {
+		return new EmailService(order);
 	}
 
 	/**

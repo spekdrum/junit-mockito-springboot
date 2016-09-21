@@ -1,4 +1,4 @@
-package es.sm2baleares.tinglao.service;
+package es.sm2baleares.tinglao.service.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -6,20 +6,23 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 
+import es.sm2baleares.tinglao.service.AmazonDeliveryService;
+import es.sm2baleares.tinglao.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.service.EmailService;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import es.sm2baleares.tinglao.exception.OrderException;
 import es.sm2baleares.tinglao.model.Discount;
 import es.sm2baleares.tinglao.model.Order;
-import es.sm2baleares.tinglao.service.impl.AmazonDeliveryServiceImpl;
-
-//TODO: caso spy
 
 /**
  * Created by pablo.beltran on 21/09/2016.
@@ -36,9 +39,25 @@ public class AmazonDeliveryServiceImplTest {
 	@Mock
 	private DeliveryScoreService deliveryScoreService;
 
-	@InjectMocks
+	@InjectMocks @Spy
 	private AmazonDeliveryServiceImpl amazonDeliveryService;
 
+	@Mock
+	private EmailService emailService;
+
+	@Captor
+	ArgumentCaptor<Long> argumentCaptor;
+
+	@Before
+	public void setUp() throws Exception {
+		Mockito.doNothing().when(deliveryScoreService).submitDeliveryPoints(Mockito.anyLong());
+
+		//De esta primera forma se ejecuta el código que reemplaza igualmente, al revés no.
+		//Mockito.when(amazonDeliveryService.getEmailServiceInstance(Mockito.any(Order.class))).thenReturn(emailService);
+		Mockito.doReturn(emailService).when(amazonDeliveryService).getEmailServiceInstance(Mockito.any(Order.class));
+
+		Mockito.doNothing().when(emailService).sendDeliveryNotification();
+	}
 
 	@Test
 	public void newOrderShouldReturnInitializedOrder() {
@@ -161,7 +180,7 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markDelivered(regularOrder, JUST_NOW);
 
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
-		ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
+		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
 
 		//Then
@@ -181,7 +200,7 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markDelivered(premiumOrder, JUST_NOW);
 
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
-		ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
+		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
 
 		//Then
@@ -200,7 +219,7 @@ public class AmazonDeliveryServiceImplTest {
 				new Date(order.getEstimatedDelivery().getTime() + DAY_MILLISECONDS));
 
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
-		ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
+		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
 
 		//Then
