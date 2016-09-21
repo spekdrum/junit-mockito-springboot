@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: es.sm2baleares.tinglao.service.AmazonDeliveryServiceImplTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 sec - in es.sm2baleares.tinglao.service.AmazonDeliveryServiceImplTest
