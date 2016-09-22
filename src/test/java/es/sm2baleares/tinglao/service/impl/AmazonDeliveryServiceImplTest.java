@@ -74,22 +74,16 @@ public class AmazonDeliveryServiceImplTest {
 		ordersBag = new HashSet<>();
 
 		//Mock de operación orderStorageService.store
-		Mockito.doAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-				Order order = (Order)invocationOnMock.getArguments()[0];
-				ordersBag.add(order.getDescription());
-				return null;
-			}
+		Mockito.doAnswer(invocationOnMock -> {
+			Order order = (Order)invocationOnMock.getArguments()[0];
+			ordersBag.add(order.getDescription());
+			return null;
 		}).when(orderStorageService).store(Mockito.any(Order.class));
 
 		//Mock de operación orderStorageService.exists
-		Mockito.doAnswer(new Answer<Boolean>() {
-			@Override
-			public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
-				String desc = (String)invocationOnMock.getArguments()[0];
-				return ordersBag.contains(desc);
-			}
+		Mockito.doAnswer(invocationOnMock -> {
+			String desc = (String)invocationOnMock.getArguments()[0];
+			return ordersBag.contains(desc);
 		}).when(orderStorageService).exists(Mockito.anyString());
 	}
 
