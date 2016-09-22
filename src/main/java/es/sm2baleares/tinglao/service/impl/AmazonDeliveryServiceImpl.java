@@ -1,9 +1,11 @@
 package es.sm2baleares.tinglao.service.impl;
 
+import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
 import es.sm2baleares.tinglao.exception.OrderException;
 import es.sm2baleares.tinglao.service.AmazonDeliveryService;
-import es.sm2baleares.tinglao.service.DeliveryScoreService;
-import es.sm2baleares.tinglao.service.EmailService;
+import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.external.service.EmailService;
+import es.sm2baleares.tinglao.external.service.OrderStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -21,14 +23,22 @@ import java.util.Date;
 @Qualifier("AmazonDeliveryService")
 public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
-
 	@Autowired
 	DeliveryScoreService deliveryScoreService;
+
+	@Autowired
+	OrderStorageService orderStorageService;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public Order newOrder(String description, double basePrice, boolean premiumCustomer) {
+	public Order initOrder(String description, double basePrice, boolean premiumCustomer)
+			throws OrderAlreadyExistsException {
+
+		if (orderStorageService.exists(description)) {
+			throw new OrderAlreadyExistsException();
+		}
+
 		Order order = new Order();
 		order.setDescription(description);
 		order.setBasePrice(basePrice);
@@ -37,6 +47,7 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 		order.setPremium(premiumCustomer);
 		calcFinalPrice(order);
 
+		orderStorageService.store(order);
 		return order;
 	}
 
@@ -49,6 +60,8 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 			order.getDiscounts().add(discount);
 		}
 		calcFinalPrice(order);
+
+		orderStorageService.store(order);
 	}
 
 	/**
@@ -64,22 +77,12 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
 		order.setEstimatedDelivery(estimatedDelivery);
 		order.setSent(true);
+
+		orderStorageService.store(order);
 	}
 
 	/**
 	 * {@inheritDoc}
-	 */
-	/*
-	 * El método markDelivered no sería testeable si se quiere evitar el envío de emails.
-	 * Posibles soluciones a acoplamiento EmailService:
-	 *
-	 * 1 - Rediseñar EmailService de modo que sea un servicio stateless, ahora no lo es. (y si viene en un jar que no
-	 * 		podemos tocar?)
-	 * 2 - Implementar un EmailServiceFactory, introducirlo como dependencia aquí. (es lo más elegante, aunque no
-	 * 		siempre será posible)
-	 * 3 - Incluir método "protected" o sin qualifier en la clase que provea la dependencia y hacer spy de la clase en
-	 * 		el test. Stubear ese método para que devuelva un mock del servicio.
-	 *
 	 */
 	public void markDelivered(Order order, Date deliverDate) throws OrderException {
 		if (!order.isSent()) {
@@ -92,6 +95,8 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
 		order.setDelivered(true);
 		order.setRealDelivery(deliverDate);
+
+		orderStorageService.store(order);
 
 		long deliveryScore = calculateDeliveryDateScore(order);
 

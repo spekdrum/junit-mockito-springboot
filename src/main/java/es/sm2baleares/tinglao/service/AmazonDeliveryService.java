@@ -1,5 +1,6 @@
 package es.sm2baleares.tinglao.service;
 
+import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
 import es.sm2baleares.tinglao.exception.OrderException;
 import es.sm2baleares.tinglao.model.Discount;
 import es.sm2baleares.tinglao.model.Order;
@@ -24,7 +25,7 @@ public interface AmazonDeliveryService {
 	 * @param premiumCustomer si el cliente es premium.
 	 * @return
 	 */
-	Order newOrder(String description, double basePrice, boolean premiumCustomer);
+	Order initOrder(String description, double basePrice, boolean premiumCustomer) throws OrderAlreadyExistsException;
 
 	/**
 	 * Añade un descuento y recalcula el precio final.

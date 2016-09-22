@@ -1,6 +1,6 @@
-package es.sm2baleares.tinglao.service.impl;
+package es.sm2baleares.tinglao.external.service.impl;
 
-import es.sm2baleares.tinglao.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ public class DeliveryScoreServiceImpl implements DeliveryScoreService {
 	private long totalPoints;
 
 	public void submitDeliveryPoints(long points) {
-		System.out.println("SUMO " + points + " PUNTOS!");
+		System.out.println("DeliveryScoreService - SUMO " + points + " PUNTOS!");
 		totalPoints += points;
 	}
 

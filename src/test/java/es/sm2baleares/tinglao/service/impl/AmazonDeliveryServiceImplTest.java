@@ -5,10 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
+import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
+import es.sm2baleares.tinglao.external.service.OrderStorageService;
 import es.sm2baleares.tinglao.service.AmazonDeliveryService;
-import es.sm2baleares.tinglao.service.DeliveryScoreService;
-import es.sm2baleares.tinglao.service.EmailService;
+import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.external.service.EmailService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,11 +22,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import es.sm2baleares.tinglao.exception.OrderException;
 import es.sm2baleares.tinglao.model.Discount;
 import es.sm2baleares.tinglao.model.Order;
+import org.mockito.stubbing.Answer;
 
 /**
  * Created by pablo.beltran on 21/09/2016.
@@ -32,6 +38,7 @@ public class AmazonDeliveryServiceImplTest {
 
 	private static final double EPSILON_ALLOWED_DOUBLE_EQUALS = 0.0;
 	public static final String TEST_PRODUCT = "Test";
+	public static final double TEST_PRODUCT_PRICE = 150.0;
 	public static final int DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 	public static final int HOURS_A_DAY = 24;
 	private static final Date JUST_NOW = new Date();
@@ -39,43 +46,68 @@ public class AmazonDeliveryServiceImplTest {
 	@Mock
 	private DeliveryScoreService deliveryScoreService;
 
-	@InjectMocks @Spy
-	private AmazonDeliveryServiceImpl amazonDeliveryService;
-
 	@Mock
 	private EmailService emailService;
 
+	@Mock
+	private OrderStorageService orderStorageService;
+
+	@InjectMocks @Spy
+	private AmazonDeliveryServiceImpl amazonDeliveryService;
+
+
 	@Captor
-	ArgumentCaptor<Long> argumentCaptor;
+	private ArgumentCaptor<Long> argumentCaptor;
+
+	private Set<String> ordersBag;
 
 	@Before
 	public void setUp() throws Exception {
 		Mockito.doNothing().when(deliveryScoreService).submitDeliveryPoints(Mockito.anyLong());
 
-		//De esta primera forma se ejecuta el código que reemplaza igualmente, al revés no.
+		//De esta primera forma se ejecuta el código que reemplaza, al revés no.
 		//Mockito.when(amazonDeliveryService.getEmailServiceInstance(Mockito.any(Order.class))).thenReturn(emailService);
 		Mockito.doReturn(emailService).when(amazonDeliveryService).getEmailServiceInstance(Mockito.any(Order.class));
 
 		Mockito.doNothing().when(emailService).sendDeliveryNotification();
+
+		//Mockeo de orderStorageService con control de pedidos duplicados
+		ordersBag = new HashSet<>();
+
+		//Mock de operación orderStorageService.store
+		Mockito.doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+				Order order = (Order)invocationOnMock.getArguments()[0];
+				ordersBag.add(order.getDescription());
+				return null;
+			}
+		}).when(orderStorageService).store(Mockito.any(Order.class));
+
+		//Mock de operación orderStorageService.exists
+		Mockito.doAnswer(new Answer<Boolean>() {
+			@Override
+			public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+				String desc = (String)invocationOnMock.getArguments()[0];
+				return ordersBag.contains(desc);
+			}
+		}).when(orderStorageService).exists(Mockito.anyString());
 	}
 
 	@Test
-	public void newOrderShouldReturnInitializedOrder() {
+	public void initOrderShouldReturnInitializedOrder() throws OrderAlreadyExistsException {
 
 		//Given
-		final String desc = TEST_PRODUCT;
-		final double price = 5.0;
-		final boolean premium = true;
+		Order testOrder = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
-		Order order = amazonDeliveryService.newOrder(desc, price, premium);
+		Order order = amazonDeliveryService.initOrder(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//Then
-		assertEquals(order.getDescription(), desc);
-		assertEquals(order.getBasePrice(), price, EPSILON_ALLOWED_DOUBLE_EQUALS);
-		assertTrue(order.isPremium());
+		assertEquals(testOrder.getDescription(), order.getDescription());
+		assertEquals(testOrder.getBasePrice(), order.getBasePrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
+		assertTrue(testOrder.isPremium() == order.isPremium());
 
-		//Comprobaciones
 		assertEquals("El precio final debe ser igual al precio base al crear un pedido",
 				order.getFinalPrice(), order.getBasePrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
 		assertFalse("Los pedidos nuevos no pueden estar enviados", order.isSent());
@@ -83,13 +115,31 @@ public class AmazonDeliveryServiceImplTest {
 	}
 
 	@Test
+	public void initOrderShouldAllowManyOrders() throws OrderAlreadyExistsException {
+		//Given - when
+		Order testOrder1 = amazonDeliveryService.initOrder(TEST_PRODUCT + "1", TEST_PRODUCT_PRICE, true);
+		Order testOrder2 = amazonDeliveryService.initOrder(TEST_PRODUCT + "2", TEST_PRODUCT_PRICE, true);
+
+		//Then - No hay error alguno. No hay Asserts, pero podemos hacer un Verify
+		Mockito.verify(orderStorageService, Mockito.times(2)).exists(Mockito.anyString());
+	}
+
+	@Test (expected = OrderAlreadyExistsException.class)
+	public void initOrderShouldThrowOrderAlreadyExistsExceptionWhenInitDuplicatedOrders()
+			throws OrderAlreadyExistsException {
+		//Given - when
+		Order testOrder1 = amazonDeliveryService.initOrder(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
+		Order testOrder2 = amazonDeliveryService.initOrder(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
+
+		//Then - throw new OrderAlreadyExistsException
+	}
+
+	@Test
 	public void addDiscountShouldCalcFinalPriceWhenDiscountsAdded() {
 		//Given
-		final double basePrice = 5.0;
 		final double discount = 10.0;
-		final double finalPrice = basePrice - (basePrice * discount / 100.0);
-
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, basePrice, true);
+		final double finalPrice = TEST_PRODUCT_PRICE - (TEST_PRODUCT_PRICE * discount / 100.0);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.addDiscount(order, new Discount("Fidelidad", discount));
@@ -101,12 +151,11 @@ public class AmazonDeliveryServiceImplTest {
 	@Test
 	public void addDiscountShouldAcumulateDiscountsWhenDiscountsAdded() {
 		//Given
-		final double basePrice = 150.0;
 		final double discount1 = 10.0;
 		final double discount2 = 5.0;
-		final double finalPrice = basePrice - (basePrice * (discount1 + discount2) / 100.0);
+		final double finalPrice = TEST_PRODUCT_PRICE - (TEST_PRODUCT_PRICE * (discount1 + discount2) / 100.0);
 
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, basePrice, true);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.addDiscount(order, new Discount("Fidelidad", discount1));
@@ -119,8 +168,8 @@ public class AmazonDeliveryServiceImplTest {
 	@Test
 	public void markSentShouldEstimateDeliveryDate() throws OrderException {
 		//Given
-		Order premiumOrder = amazonDeliveryService.newOrder(TEST_PRODUCT, 150.0, true);
-		Order regularOrder = amazonDeliveryService.newOrder(TEST_PRODUCT, 150.0, false);
+		Order premiumOrder = buildOrderTestObject(TEST_PRODUCT + "P", TEST_PRODUCT_PRICE, true);
+		Order regularOrder = buildOrderTestObject(TEST_PRODUCT + "R", TEST_PRODUCT_PRICE, false);
 
 		//When
 		amazonDeliveryService.markSent(premiumOrder, JUST_NOW);
@@ -147,7 +196,7 @@ public class AmazonDeliveryServiceImplTest {
 	@Test (expected = OrderException.class)
 	public void markSentShouldThrowOrderExceptionWhenOrderAlreadySent() throws OrderException {
 		//Given
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, true);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.markSent(order, JUST_NOW);
@@ -160,7 +209,7 @@ public class AmazonDeliveryServiceImplTest {
 	@Test (expected = OrderException.class)
 	public void markDeliveredShouldThrowOrderExceptionWhenOrderIsNotSent() throws OrderException {
 		//Given
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, true);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.markDelivered(order, JUST_NOW);
@@ -173,7 +222,7 @@ public class AmazonDeliveryServiceImplTest {
 		final long expectedPointsRegular = AmazonDeliveryService.ESTIMATED_DAYS_TO_DELIVER_REGULAR * HOURS_A_DAY;
 
 		//Given
-		Order regularOrder = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, false);
+		Order regularOrder = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, false);
 
 		//When
 		amazonDeliveryService.markSent(regularOrder, JUST_NOW);
@@ -193,7 +242,7 @@ public class AmazonDeliveryServiceImplTest {
 		final long expectedPointsPremium = AmazonDeliveryService.ESTIMATED_DAYS_TO_DELIVER_PREMIUM * HOURS_A_DAY;
 
 		//Given
-		Order premiumOrder = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, true);
+		Order premiumOrder = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.markSent(premiumOrder, JUST_NOW);
@@ -211,7 +260,7 @@ public class AmazonDeliveryServiceImplTest {
 	@Test
 	public void markDeliveredShouldSubmitNegativeScoreWhenOrderDeliversAfterEstimatedDate() throws OrderException {
 		//Given
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, true);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When / el pedido se entrega pasado un día de fecha prevista
 		amazonDeliveryService.markSent(order, JUST_NOW);
@@ -231,7 +280,7 @@ public class AmazonDeliveryServiceImplTest {
 	@Test (expected = OrderException.class)
 	public void markDeliveredShouldThrowOrderExceptionWhenAlreadyDelivered() throws OrderException {
 		//Given
-		Order order = amazonDeliveryService.newOrder(TEST_PRODUCT, 10.0, true);
+		Order order = buildOrderTestObject(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//When
 		amazonDeliveryService.markSent(order, JUST_NOW);
@@ -239,5 +288,13 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markDelivered(order, JUST_NOW);
 
 		//Then throw OrderException
+	}
+
+	private Order buildOrderTestObject(String description, double basePrice, boolean premiumCustomer) {
+		Order order = new Order();
+		order.setDescription(description);
+		order.setBasePrice(basePrice);
+		order.setPremium(premiumCustomer);
+		return order;
 	}
 }

@@ -1,4 +1,4 @@
-package es.sm2baleares.tinglao.service;
+package es.sm2baleares.tinglao.external.service;
 
 import es.sm2baleares.tinglao.model.Order;
 
@@ -14,7 +14,7 @@ public class EmailService {
 	}
 
 	public void sendDeliveryNotification() {
-		System.out.println("ATENCIÓN! Enviando notificación producto " + order.getDescription());
+		System.out.println("EmailService - ATENCIÓN! Enviando notificación producto " + order.getDescription());
 	}
 
 }

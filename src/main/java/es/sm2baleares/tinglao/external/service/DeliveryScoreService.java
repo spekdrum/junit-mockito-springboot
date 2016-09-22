@@ -1,4 +1,4 @@
-package es.sm2baleares.tinglao.service;
+package es.sm2baleares.tinglao.external.service;
 
 /**
  * Created by pablo.beltran on 21/09/2016.
