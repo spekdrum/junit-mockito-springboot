@@ -5,6 +5,7 @@ import es.sm2baleares.tinglao.model.Order;
 import org.springframework.stereotype.Component;
 
 /**
+ * Factory para EmailService.
  * Created by pablo.beltran on 22/09/2016.
  */
 @Component
