@@ -11,5 +11,9 @@ public interface DeliveryScoreService {
 	 */
 	void submitDeliveryPoints(long points);
 
+	/**
+	 * Obtiene la puntuación actual del servicio de entregas, como medida simple de calidad.
+	 * @return
+	 */
 	long getCurrentScore();
 }
