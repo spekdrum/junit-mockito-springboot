@@ -8,11 +8,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
-import es.sm2baleares.tinglao.external.service.OrderStorageService;
-import es.sm2baleares.tinglao.service.AmazonDeliveryService;
-import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
-import es.sm2baleares.tinglao.external.service.EmailService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,14 +16,19 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
+import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
 import es.sm2baleares.tinglao.exception.OrderException;
+import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.external.service.EmailService;
+import es.sm2baleares.tinglao.external.service.OrderStorageService;
+import es.sm2baleares.tinglao.factory.EmailServiceFactory;
 import es.sm2baleares.tinglao.model.Discount;
 import es.sm2baleares.tinglao.model.Order;
-import org.mockito.stubbing.Answer;
+import es.sm2baleares.tinglao.service.AmazonDeliveryService;
 
 /**
  * Created by pablo.beltran on 21/09/2016.
@@ -52,9 +52,11 @@ public class AmazonDeliveryServiceImplTest {
 	@Mock
 	private OrderStorageService orderStorageService;
 
-	@InjectMocks @Spy
-	private AmazonDeliveryServiceImpl amazonDeliveryService;
+	@Mock
+	private EmailServiceFactory emailServiceFactory;
 
+	@InjectMocks
+	private AmazonDeliveryServiceImpl amazonDeliveryService;
 
 	@Captor
 	private ArgumentCaptor<Long> argumentCaptor;
@@ -65,10 +67,7 @@ public class AmazonDeliveryServiceImplTest {
 	public void setUp() throws Exception {
 		Mockito.doNothing().when(deliveryScoreService).submitDeliveryPoints(Mockito.anyLong());
 
-		//De esta primera forma se ejecuta el código que reemplaza, al revés no.
-		//Mockito.when(amazonDeliveryService.getEmailServiceInstance(Mockito.any(Order.class))).thenReturn(emailService);
-		Mockito.doReturn(emailService).when(amazonDeliveryService).getEmailServiceInstance(Mockito.any(Order.class));
-
+		Mockito.when(emailServiceFactory.buildEmailService(Mockito.any(Order.class))).thenReturn(emailService);
 		Mockito.doNothing().when(emailService).sendDeliveryNotification();
 
 		//Mockeo de orderStorageService con control de pedidos duplicados

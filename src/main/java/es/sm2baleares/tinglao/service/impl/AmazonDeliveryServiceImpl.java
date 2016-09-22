@@ -2,6 +2,7 @@ package es.sm2baleares.tinglao.service.impl;
 
 import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
 import es.sm2baleares.tinglao.exception.OrderException;
+import es.sm2baleares.tinglao.factory.EmailServiceFactory;
 import es.sm2baleares.tinglao.service.AmazonDeliveryService;
 import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
 import es.sm2baleares.tinglao.external.service.EmailService;
@@ -24,10 +25,13 @@ import java.util.Date;
 public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
 	@Autowired
-	DeliveryScoreService deliveryScoreService;
+	private DeliveryScoreService deliveryScoreService;
 
 	@Autowired
-	OrderStorageService orderStorageService;
+	private OrderStorageService orderStorageService;
+
+	@Autowired
+	private EmailServiceFactory emailServiceFactory;
 
 	/**
 	 * {@inheritDoc}
@@ -104,14 +108,9 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 		deliveryScoreService.submitDeliveryPoints(deliveryScore);
 
 		//Send email notification
-		EmailService emailService = getEmailServiceInstance(order);
+		EmailService emailService = emailServiceFactory.buildEmailService(order);
 
 		emailService.sendDeliveryNotification();
-	}
-
-	//Fix para habilitar mocking de EmailService cuando no sea posible crear Factory o rediseñar el servicio.
-	EmailService getEmailServiceInstance(Order order) {
-		return new EmailService(order);
 	}
 
 	/**
