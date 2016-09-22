@@ -35,8 +35,6 @@ public class SampleController {
 		amazonDeliveryService.markSent(order, new Date());
 		amazonDeliveryService.markDelivered(order, new Date());
 
-		//System.out.println("FINAL PRICE: " + order.getFinalPrice());
-
 		return "El servicio de entregas tiene " + deliveryScoreService.getCurrentScore() + " puntos";
 	}
 
