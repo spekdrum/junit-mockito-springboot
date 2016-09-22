@@ -98,7 +98,7 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
 		orderStorageService.store(order);
 
-		long deliveryScore = calculateDeliveryDateScore(order);
+		long deliveryScore = calcDeliveryDateScore(order);
 
 		//Submit score
 		deliveryScoreService.submitDeliveryPoints(deliveryScore);
@@ -119,7 +119,7 @@ public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 	 * @param order
 	 * @return
 	 */
-	private long calculateDeliveryDateScore(Order order) {
+	private long calcDeliveryDateScore(Order order) {
 		final long diff = order.getEstimatedDelivery().getTime() - order.getRealDelivery().getTime();
 		return diff / (60 * 60 * 1000);
 	}
