@@ -3,7 +3,7 @@ package es.sm2baleares.tinglao.external.service;
 import es.sm2baleares.tinglao.model.Order;
 
 /**
- * Servicio externo para almacenar pedidos.
+ * Simula un servicio externo para almacenar pedidos.
  * Created by pablo.beltran on 22/09/2016.
  */
 public interface OrderStorageService {

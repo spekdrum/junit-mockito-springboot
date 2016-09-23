@@ -3,7 +3,8 @@ package es.sm2baleares.tinglao.service.impl;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.inject.Inject;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +24,10 @@ import es.sm2baleares.tinglao.service.AmazonDeliveryService;
 @Qualifier("AmazonDeliveryService")
 public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
-	@Autowired
+	@Inject
 	private DeliveryScoreService deliveryScoreService;
 
-	@Autowired
+	@Inject
 	private OrderStorageService orderStorageService;
 
 	/**

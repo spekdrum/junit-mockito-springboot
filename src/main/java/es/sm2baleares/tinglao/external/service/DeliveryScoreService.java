@@ -1,6 +1,7 @@
 package es.sm2baleares.tinglao.external.service;
 
 /**
+ * Servicio que simula un control de entregas para un sistema de control calidad.
  * Created by pablo.beltran on 21/09/2016.
  */
 public interface DeliveryScoreService {
