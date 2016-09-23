@@ -16,9 +16,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
 import es.sm2baleares.tinglao.exception.OrderException;
@@ -37,10 +35,10 @@ import es.sm2baleares.tinglao.service.AmazonDeliveryService;
 public class AmazonDeliveryServiceImplTest {
 
 	private static final double EPSILON_ALLOWED_DOUBLE_EQUALS = 0.0;
-	public static final String TEST_PRODUCT = "Test";
-	public static final double TEST_PRODUCT_PRICE = 150.0;
-	public static final int DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
-	public static final int HOURS_A_DAY = 24;
+	private static final String TEST_PRODUCT = "Test";
+	private static final double TEST_PRODUCT_PRICE = 150.0;
+	private static final int DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
+	private static final int HOURS_A_DAY = 24;
 	private static final Date JUST_NOW = new Date();
 
 	@Mock

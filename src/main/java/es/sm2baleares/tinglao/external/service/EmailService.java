@@ -1,5 +1,8 @@
 package es.sm2baleares.tinglao.external.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import es.sm2baleares.tinglao.model.Order;
 
 /**
@@ -12,12 +15,14 @@ public class EmailService {
 
 	private Order order;
 
+	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+
 	public EmailService(Order order) {
 		this.order = order;
 	}
 
 	public void sendDeliveryNotification() {
-		System.out.println("EmailService - ATENCIÓN! Enviando notificación producto " + order.getDescription());
+		logger.info("EmailService - Enviando notificación producto " + order.getDescription());
 	}
 
 }

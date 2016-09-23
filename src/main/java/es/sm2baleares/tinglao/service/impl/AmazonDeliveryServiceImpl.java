@@ -1,21 +1,22 @@
 package es.sm2baleares.tinglao.service.impl;
 
-import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
-import es.sm2baleares.tinglao.exception.OrderException;
-import es.sm2baleares.tinglao.factory.EmailServiceFactory;
-import es.sm2baleares.tinglao.service.AmazonDeliveryService;
-import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
-import es.sm2baleares.tinglao.external.service.EmailService;
-import es.sm2baleares.tinglao.external.service.OrderStorageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Calendar;
+import java.util.Date;
+
+import javax.inject.Inject;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import es.sm2baleares.tinglao.exception.OrderAlreadyExistsException;
+import es.sm2baleares.tinglao.exception.OrderException;
+import es.sm2baleares.tinglao.external.service.DeliveryScoreService;
+import es.sm2baleares.tinglao.external.service.EmailService;
+import es.sm2baleares.tinglao.external.service.OrderStorageService;
+import es.sm2baleares.tinglao.factory.EmailServiceFactory;
 import es.sm2baleares.tinglao.model.Discount;
 import es.sm2baleares.tinglao.model.Order;
-
-import java.util.Calendar;
-import java.util.Date;
+import es.sm2baleares.tinglao.service.AmazonDeliveryService;
 
 /**
  * Created by pablo.beltran on 21/09/2016.
@@ -24,13 +25,13 @@ import java.util.Date;
 @Qualifier("AmazonDeliveryService")
 public class AmazonDeliveryServiceImpl implements AmazonDeliveryService {
 
-	@Autowired
+	@Inject
 	private DeliveryScoreService deliveryScoreService;
 
-	@Autowired
+	@Inject
 	private OrderStorageService orderStorageService;
 
-	@Autowired
+	@Inject
 	private EmailServiceFactory emailServiceFactory;
 
 	/**
