@@ -99,10 +99,17 @@ public class AmazonDeliveryServiceImplTest {
 		assertEquals(testOrder.getBasePrice(), order.getBasePrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
 		assertTrue(testOrder.isPremium() == order.isPremium());
 
-		assertEquals("El precio final debe ser igual al precio base al crear un pedido",
+		assertEquals("RQ-142: El precio final debe ser igual al precio base al crear un pedido",
 				order.getFinalPrice(), order.getBasePrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
 		assertFalse("Los pedidos nuevos no pueden estar enviados", order.isSent());
 		assertFalse("Los pedidos nuevos no pueden estar entregados", order.isDelivered());
+
+		//Verificar que se comprueba que el pedido no existe
+		Mockito.verify(orderStorageService).exists(order.getDescription());
+
+		//Verificar que se da la orden de guardar el pedido
+		Mockito.verify(orderStorageService).store(order);
+
 	}
 
 	@Test
@@ -111,7 +118,7 @@ public class AmazonDeliveryServiceImplTest {
 		Order testOrder1 = amazonDeliveryService.initOrder(TEST_PRODUCT + "1", TEST_PRODUCT_PRICE, true);
 		Order testOrder2 = amazonDeliveryService.initOrder(TEST_PRODUCT + "2", TEST_PRODUCT_PRICE, true);
 
-		//Then - No hay error alguno. No hay Asserts, pero podemos hacer un Verify
+		//Then - No hay error alguno. No tiene sentido poner Asserts, pero tenemos que hacer un Verify
 		Mockito.verify(orderStorageService, Mockito.times(2)).exists(Mockito.anyString());
 	}
 
@@ -123,6 +130,9 @@ public class AmazonDeliveryServiceImplTest {
 		Order testOrder2 = amazonDeliveryService.initOrder(TEST_PRODUCT, TEST_PRODUCT_PRICE, true);
 
 		//Then - throw new OrderAlreadyExistsException
+
+		//En este caso también es importante que se hayan ejecutado 2 exists
+		Mockito.verify(orderStorageService, Mockito.times(2)).exists(Mockito.anyString());
 	}
 
 	@Test
@@ -137,6 +147,8 @@ public class AmazonDeliveryServiceImplTest {
 
 		//Then
 		assertEquals(finalPrice, order.getFinalPrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
+
+		Mockito.verify(orderStorageService).store(order);
 	}
 
 	@Test
@@ -154,6 +166,8 @@ public class AmazonDeliveryServiceImplTest {
 
 		//Then
 		assertEquals(finalPrice, order.getFinalPrice(), EPSILON_ALLOWED_DOUBLE_EQUALS);
+
+		Mockito.verify(orderStorageService, Mockito.times(2)).store(order);
 	}
 
 	@Test
@@ -182,6 +196,9 @@ public class AmazonDeliveryServiceImplTest {
 		assertEquals("La fecha de entrega estimada para clientes regulares debería ser de " +
 						AmazonDeliveryService.ESTIMATED_DAYS_TO_DELIVER_REGULAR + " después de la fecha de envío.",
 				AmazonDeliveryService.ESTIMATED_DAYS_TO_DELIVER_REGULAR, daysDiffRegular);
+
+		Mockito.verify(orderStorageService).store(premiumOrder);
+		Mockito.verify(orderStorageService).store(regularOrder);
 	}
 
 	@Test (expected = OrderException.class)
@@ -194,6 +211,8 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markSent(order, JUST_NOW);
 
 		//Then throw OrderException
+
+		Mockito.verify(orderStorageService).store(order);
 	}
 
 
@@ -219,13 +238,14 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markSent(regularOrder, JUST_NOW);
 		amazonDeliveryService.markDelivered(regularOrder, JUST_NOW);
 
+		//Then
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
 		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
-
-		//Then
 		assertEquals("Los puntos recibidos siendo pedido regular deben ser " + expectedPointsRegular,
 				expectedPointsRegular, argumentCaptor.getValue().longValue());
+
+		Mockito.verify(orderStorageService, Mockito.times(2)).store(regularOrder);
 	}
 
 	@Test
@@ -239,13 +259,15 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markSent(premiumOrder, JUST_NOW);
 		amazonDeliveryService.markDelivered(premiumOrder, JUST_NOW);
 
+
+		//Then
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
 		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
-
-		//Then
 		assertEquals("Los puntos recibidos siendo pedido premium deben ser " + expectedPointsPremium,
 				expectedPointsPremium, argumentCaptor.getValue().longValue());
+
+		Mockito.verify(orderStorageService, Mockito.times(2)).store(premiumOrder);
 	}
 
 	@Test
@@ -258,13 +280,14 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markDelivered(order,
 				new Date(order.getEstimatedDelivery().getTime() + DAY_MILLISECONDS));
 
+		//Then
 		//Observamos con qué valor se ha invocado deliveryScoreService.submitDeliveryPoints
 		//ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
 		Mockito.verify(deliveryScoreService).submitDeliveryPoints(argumentCaptor.capture());
-
-		//Then
 		assertTrue("La puntuación debe ser menor que 0 cuando la fecha de entrega es posterior a la estimada",
 				argumentCaptor.getValue() < 0);
+
+		Mockito.verify(orderStorageService, Mockito.times(2)).store(order);
 
 	}
 
@@ -279,6 +302,8 @@ public class AmazonDeliveryServiceImplTest {
 		amazonDeliveryService.markDelivered(order, JUST_NOW);
 
 		//Then throw OrderException
+
+		Mockito.verify(orderStorageService, Mockito.times(2)).store(order);
 	}
 
 	private Order buildOrderTestObject(String description, double basePrice, boolean premiumCustomer) {
