@@ -152,7 +152,7 @@ public class AmazonDeliveryServiceImplTest {
 	}
 
 	@Test
-	public void addDiscountShouldAcumulateDiscountsWhenDiscountsAdded() {
+	public void addDiscountShouldAccumulateDiscountsWhenDiscountsAdded() {
 		//Given
 		final double discount1 = 10.0;
 		final double discount2 = 5.0;
